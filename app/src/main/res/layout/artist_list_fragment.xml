@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/relativeLayout"
+    >
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewListArtist"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layoutAnimation="@anim/layout_animation_up_to_down"
+        android:background="@null" />
+    <TextView
+        android:id="@+id/tvNoSong"
+        android:textStyle="normal"
+        android:textColor="@color/black"
+        android:text="@string/there_are_no_songs_on_your_device_yet"
+        android:textSize="30sp"
+        android:singleLine="true"
+        android:scrollHorizontally="true"
+        android:layout_centerInParent="true"
+        android:ellipsize="marquee"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"/>
+
+</RelativeLayout>

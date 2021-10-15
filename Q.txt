@@ -1,0 +1,9 @@
+Home
+- SlideAdapter
+- HomeMusicAdapter: retriever, Glide, svMusic
+- Tải nhạc từ máy vào room trong app
+
+
+--------------------
+Model - Room - Repo (Model -> Model UI) 
+- (usecase)
