@@ -18,6 +18,7 @@ class MusicService:Service() {
     private var mediaPlayer: MediaPlayer? = null
     public var isPlaying = false
     public var musicIsPlaying: String =""
+    public var isLooping = false
 
     override fun onBind(intent: Intent): IBinder {
         return binder
@@ -104,7 +105,6 @@ class MusicService:Service() {
             mediaPlayer?.pause()
             isPlaying = false
         }
-
     }
 
     public fun playMusic()
@@ -117,12 +117,40 @@ class MusicService:Service() {
         }
     }
 
+    public fun getCurrenPosition(): Int? {
+        return mediaPlayer?.currentPosition
+    }
+
+    public fun getDuration(): Int? {
+        return mediaPlayer?.duration
+    }
+
+    public fun seekTo(progress:Int)
+    {
+        mediaPlayer?.seekTo(progress)
+    }
+
+    public fun changeLoopStatus()
+    {
+        if(mediaPlayer?.isLooping == true) {
+            mediaPlayer?.isLooping = false
+            isLooping = false
+        }
+        else {
+            mediaPlayer?.isLooping = true
+            isLooping = true
+        }
+
+    }
+
     public fun stopMusic()
     {
         mediaPlayer?.stop()
         isPlaying = false
         Toast.makeText(this,"stop music",Toast.LENGTH_SHORT).show()
     }
+
+
 
     inner class MusicBinder:Binder(){
         fun getService():MusicService = this@MusicService

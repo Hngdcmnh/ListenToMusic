@@ -4,21 +4,35 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.graphics.Color
+import android.media.MediaMetadataRetriever
 import android.media.MediaPlayer
 import android.net.Uri
-import android.os.Build
+import android.os.*
 import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import android.os.IBinder
 import android.util.Log
 import android.view.View
+import android.view.animation.Animation
+import android.view.animation.LinearInterpolator
+import android.view.animation.RotateAnimation
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.SeekBar
 import android.widget.TextView
+import androidx.annotation.ColorInt
 import androidx.annotation.RequiresApi
+import androidx.core.net.toUri
+import androidx.core.view.isInvisible
+import androidx.core.view.isVisible
+import com.bumptech.glide.Glide
 import com.example.listentomusic.model.Music
+import java.util.*
+import kotlin.collections.ArrayList
 
 class PlayMusicActivity : AppCompatActivity() {
+    private var backBtn: ImageButton? = null
+    private var loopBtn: ImageButton? = null
+    private var seekBar: SeekBar? = null
     private var tvName: TextView? = null
     private var tvArtist: TextView? = null
     private var imgView: ImageView? = null
@@ -27,6 +41,11 @@ class PlayMusicActivity : AppCompatActivity() {
     private var nextBtn: ImageButton? = null
     private var pauseBtn: ImageButton? = null
     private var uri : Uri? = null
+
+    private var playingThreadHandler: Handler = Handler(Looper.getMainLooper())
+    private lateinit var updateSeekBar:Thread
+    var timeMax :Int =0
+    var timer = Timer()
 
     /* handel music */
     private var mBound:Boolean = false
@@ -41,6 +60,8 @@ class PlayMusicActivity : AppCompatActivity() {
             val binder = service as MusicService.MusicBinder
             mService = binder.getService()
             mBound = true
+            initSeekBar()
+
         }
 
         override fun onServiceDisconnected(arg0: ComponentName) {
@@ -48,11 +69,14 @@ class PlayMusicActivity : AppCompatActivity() {
         }
     }
 
-
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_play_music)
+        backBtn = findViewById(R.id.buttonBack)
+        loopBtn = findViewById(R.id.playMusicButtonLoop)
+        seekBar = findViewById(R.id.seekBar)
+        tvName = findViewById(R.id.playMusicTextViewName)
         tvArtist = findViewById(R.id.playMusicTextViewArtist)
         imgView = findViewById(R.id.playMusicImg)
         playBtn = findViewById(R.id.playMusicButtonPlay)
@@ -62,11 +86,23 @@ class PlayMusicActivity : AppCompatActivity() {
         mediaPlayer = MediaPlayer()
         listMusic = intent.getSerializableExtra("list music") as ArrayList<Music>
         position = intent.extras?.getInt("position")!!
+        updateNewUI(position)
 
+
+        /* handle button back */
+        backBtn?.setOnClickListener {
+
+        }
+
+        /* play and pause music*/
         pauseBtn?.setOnClickListener {
             playBtn?.visibility = View.VISIBLE
             pauseBtn?.visibility = View.INVISIBLE
             mService.playMusic()
+//            if((seekBar?.progress)!! /1000 <=2)
+//            {
+//                updateSeekBar()
+//            }
         }
 
         playBtn?.setOnClickListener {
@@ -80,7 +116,7 @@ class PlayMusicActivity : AppCompatActivity() {
         nextBtn?.setOnClickListener {
             if(position<listMusic.size-1) {
                 position++
-//                updateNewUI(position)
+                updateNewUI(position)
                 mService.stopMusic()
                 mService.startMusic(listMusic[position])
             }
@@ -89,11 +125,40 @@ class PlayMusicActivity : AppCompatActivity() {
         prevBtn?.setOnClickListener {
             if(position>0) {
                 position--
-//                updateNewUI(position)
+                updateNewUI(position)
                 mService.stopMusic()
                 mService.startMusic(listMusic[position])
             }
         }
+
+        // Handle seekBar
+        seekBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if(fromUser)
+                {
+                    mService.seekTo(progress)
+                    Log.e(this.javaClass.simpleName,progress.toString())
+                }
+            }
+
+            override fun onStartTrackingTouch(p0: SeekBar?) {
+                Log.e(this.javaClass.simpleName,"Start")
+            }
+
+            override fun onStopTrackingTouch(p0: SeekBar?) {
+                Log.e(this.javaClass.simpleName,"Stop")
+
+            }
+        })
+
+        // Handle Loop
+        loopBtn?.setOnClickListener {
+            mService.changeLoopStatus()
+            if (mService.isLooping) loopBtn?.setColorFilter(Color.parseColor("#FFF333"))
+            else loopBtn?.setColorFilter(Color.parseColor("#FFFFFF"))
+        }
+
+
     }
 
     override fun onStart() {
@@ -107,6 +172,97 @@ class PlayMusicActivity : AppCompatActivity() {
         super.onStop()
         Log.e(this.javaClass.simpleName,"stop fragment")
         this.unbindService(connection)
+        timer.cancel()
         mBound = false
     }
+
+    private fun initSeekBar() {
+        seekBar?.max = mService.getDuration()!!
+        updateSeekBar()
+    }
+
+    fun updateSeekBar()
+    {
+        //        Thread(Runnable {
+//            this@PlayMusicActivity.runOnUiThread(Runnable {
+//                Log.e(this.javaClass.simpleName,"thread UI")
+//                seekBar?.progress = mService.getCurrenPosition()!!
+//            })
+//        }).start()
+
+//        Thread({
+//            object :Runnable{
+//                override fun run() {
+//                    Log.e(this.javaClass.simpleName,"Thread Update seekbar")
+//                    seekBar?.progress = mService.getCurrenPosition()!!
+//                    playingThreadHandler.postDelayed(this,1000)
+//                }
+//            }
+//        })
+        timeMax = mService.getDuration()!!
+        timer = Timer()
+        var timerTask = object : TimerTask() {
+            override fun run() {
+                var progress = seekBar?.progress!!
+                if( progress/1000 >= timeMax/1000)
+                {
+                    seekBar?.progress=0
+                    mService.isPlaying = false
+                    runOnUiThread {
+                        playBtn?.visibility = View.INVISIBLE
+                        pauseBtn?.visibility = View.VISIBLE
+                    }
+                }
+                else if(mService.isPlaying == true)
+                {
+                    seekBar?.progress = mService.getCurrenPosition()!!
+                    Log.e(this.javaClass.simpleName,"progress: " + progress/1000 )
+                    Log.e(this.javaClass.simpleName,"duration: " + timeMax/1000 )
+                }
+            }
+        }
+        timer.scheduleAtFixedRate(timerTask,0,1000)
+    }
+
+    fun updateNewUI(position:Int)
+    {
+        uri = listMusic[position].link.toUri()
+        metaData(uri!!)
+        tvName?.text = listMusic[position].name
+        tvArtist?.text = listMusic[position].artist
+        pauseBtn?.isInvisible = true
+        playBtn?.isVisible = true
+        val animation = RotateAnimation(
+            0f,
+            360f,
+            Animation.RELATIVE_TO_SELF,
+            0.5f,
+            Animation.RELATIVE_TO_SELF,
+            0.5f
+        ).apply {
+            duration = 12000
+            repeatMode = Animation.RESTART
+            repeatCount = Animation.INFINITE
+        }
+        animation.interpolator = LinearInterpolator()
+        imgView?.startAnimation(animation)
+    }
+
+    private fun metaData(uri: Uri) {
+        val retriever = MediaMetadataRetriever()
+        retriever.setDataSource(uri.toString())
+        val art: ByteArray? = retriever.embeddedPicture
+        if (art != null) {
+            Glide.with(this)
+                .asBitmap()
+                .load(art)
+                .into(imgView!!)
+        } else {
+            Glide.with(this)
+                .asBitmap()
+                .load(R.mipmap.ic_launcher)
+                .into(imgView!!)
+        }
+    }
 }
+

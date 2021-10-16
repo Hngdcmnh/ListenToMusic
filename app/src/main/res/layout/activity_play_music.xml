@@ -138,6 +138,7 @@
             app:layout_constraintTop_toBottomOf="@id/seekBar"
             app:tint="@color/white" />
 
+
         <ImageButton
             android:id="@+id/playMusicButtonPause"
             android:layout_width="60dp"

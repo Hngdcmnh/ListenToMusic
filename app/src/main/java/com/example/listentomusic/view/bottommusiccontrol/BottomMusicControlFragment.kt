@@ -104,7 +104,6 @@ class BottomMusicControlFragment(private var position : Int,var listMusic: Array
         bottomNextBtn = view.findViewById(R.id.bottomNextButton)
         bottomPauseBtn = view.findViewById(R.id.bottomPauseButton)
         mediaPlayer = MediaPlayer()
-
         init()
 
         /**
@@ -127,7 +126,6 @@ class BottomMusicControlFragment(private var position : Int,var listMusic: Array
             bottomPauseBtn?.visibility = View.VISIBLE
 //            mediaPlayer.pause()
             mService.pauseMusic()
-
         }
 
         /* button next/prev */
@@ -166,15 +164,13 @@ class BottomMusicControlFragment(private var position : Int,var listMusic: Array
                 Animation.RELATIVE_TO_SELF,
                 0.5f
         ).apply {
-            duration = 6000
+            duration = 12000
             repeatMode = Animation.RESTART
             repeatCount = Animation.INFINITE
         }
         animation.interpolator = LinearInterpolator()
         bottomImgView?.startAnimation(animation)
     }
-
-
 
     /**
      * initialize the bottom fragment's view
@@ -194,7 +190,7 @@ class BottomMusicControlFragment(private var position : Int,var listMusic: Array
             Animation.RELATIVE_TO_SELF,
             0.5f
         ).apply {
-            duration = 6000
+            duration = 12000
             repeatMode = Animation.RESTART
             repeatCount = Animation.INFINITE
         }
