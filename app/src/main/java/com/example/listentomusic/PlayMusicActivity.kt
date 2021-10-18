@@ -33,6 +33,8 @@ class PlayMusicActivity : AppCompatActivity() {
     private var backBtn: ImageButton? = null
     private var loopBtn: ImageButton? = null
     private var seekBar: SeekBar? = null
+    private var tvSeekBarStart: TextView? = null
+    private var tvSeekBarEnd:TextView? = null
     private var tvName: TextView? = null
     private var tvArtist: TextView? = null
     private var imgView: ImageView? = null
@@ -42,8 +44,8 @@ class PlayMusicActivity : AppCompatActivity() {
     private var pauseBtn: ImageButton? = null
     private var uri : Uri? = null
 
-    private var playingThreadHandler: Handler = Handler(Looper.getMainLooper())
-    private lateinit var updateSeekBar:Thread
+//    private var playingThreadHandler: Handler = Handler(Looper.getMainLooper())
+//    private lateinit var updateSeekBar:Thread
     var timeMax :Int =0
     var timer = Timer()
 
@@ -76,6 +78,8 @@ class PlayMusicActivity : AppCompatActivity() {
         backBtn = findViewById(R.id.buttonBack)
         loopBtn = findViewById(R.id.playMusicButtonLoop)
         seekBar = findViewById(R.id.seekBar)
+        tvSeekBarStart = findViewById(R.id.tvSeekbarStart)
+        tvSeekBarEnd = findViewById(R.id.tvSeekbarEnd)
         tvName = findViewById(R.id.playMusicTextViewName)
         tvArtist = findViewById(R.id.playMusicTextViewArtist)
         imgView = findViewById(R.id.playMusicImg)
@@ -138,6 +142,10 @@ class PlayMusicActivity : AppCompatActivity() {
                 {
                     mService.seekTo(progress)
                     Log.e(this.javaClass.simpleName,progress.toString())
+                    var currentPos = mService.getCurrenPosition()!!/1000
+                    var minute = currentPos!!/60
+                    var second = currentPos!! - minute*60
+                    tvSeekBarStart?.text = String.format("%02d",minute)+":"+String.format("%02d",second)
                 }
             }
 
@@ -178,6 +186,10 @@ class PlayMusicActivity : AppCompatActivity() {
 
     private fun initSeekBar() {
         seekBar?.max = mService.getDuration()!!
+        var duration = mService.getDuration()!!/1000
+        var minute = duration!!/60
+        var second = duration!! - minute*60
+        tvSeekBarEnd?.text = minute.toString()+":"+second.toString()
         updateSeekBar()
     }
 
@@ -207,15 +219,24 @@ class PlayMusicActivity : AppCompatActivity() {
                 if( progress/1000 >= timeMax/1000)
                 {
                     seekBar?.progress=0
-                    mService.isPlaying = false
                     runOnUiThread {
-                        playBtn?.visibility = View.INVISIBLE
-                        pauseBtn?.visibility = View.VISIBLE
+                        if(!mService.isLooping) {
+                            playBtn?.visibility = View.INVISIBLE
+                            pauseBtn?.visibility = View.VISIBLE
+                            mService.isPlaying = false
+                            tvSeekBarStart?.text = String.format("%02d",0)+":"+String.format("%02d",0)
+                        }
                     }
                 }
                 else if(mService.isPlaying == true)
                 {
                     seekBar?.progress = mService.getCurrenPosition()!!
+                    runOnUiThread {
+                        var currentPos = mService.getCurrenPosition()!!/1000
+                        var minute = currentPos!!/60
+                        var second = currentPos!! - minute*60
+                        tvSeekBarStart?.text = String.format("%02d",minute)+":"+String.format("%02d",second)
+                    }
                     Log.e(this.javaClass.simpleName,"progress: " + progress/1000 )
                     Log.e(this.javaClass.simpleName,"duration: " + timeMax/1000 )
                 }
