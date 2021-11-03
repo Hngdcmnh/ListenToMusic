@@ -24,6 +24,7 @@ import androidx.core.net.toUri
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
 import com.bumptech.glide.Glide
 import com.example.listentomusic.MusicService
 import com.example.listentomusic.PlayMusicActivity
@@ -47,7 +48,8 @@ class BottomMusicControlFragment(private var position : Int,var listMusic: Array
 
     /* handel music */
     private var mBound:Boolean = false
-    private lateinit var mService:MusicService
+//    private var mService:MusicService? = null
+    private var mService:MusicService = MusicService()
     private lateinit var mediaPlayer:MediaPlayer
 
     private val connection = object :ServiceConnection{
@@ -56,8 +58,10 @@ class BottomMusicControlFragment(private var position : Int,var listMusic: Array
             val binder = service as MusicService.MusicBinder
             mService = binder.getService()
             mBound = true
-            Log.e(this.javaClass.simpleName,mService.isPlaying.toString())
-            mService.startMusic(listMusic[position])
+            Log.e(this.javaClass.simpleName,"onConnected")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                mService?.startMusic(listMusic[position])
+            }
             bottomPlayBtn?.visibility = View.VISIBLE
             bottomPauseBtn?.visibility = View.INVISIBLE
         }
@@ -72,6 +76,7 @@ class BottomMusicControlFragment(private var position : Int,var listMusic: Array
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        Log.e(this.javaClass.simpleName,"onCreateView")
         return inflater.inflate(R.layout.bottom_music_player_control, container, false)
     }
 
@@ -79,7 +84,7 @@ class BottomMusicControlFragment(private var position : Int,var listMusic: Array
     override fun onStart() {
         super.onStart()
         // Bind to LocalService
-        Log.e(this.javaClass.simpleName,"start fragment")
+        Log.e(this.javaClass.simpleName,"onStart")
         var intent = Intent(this.context, MusicService::class.java)
         this.context?.startService(intent)
         this.context?.bindService(intent, connection, Context.BIND_AUTO_CREATE)
@@ -87,7 +92,7 @@ class BottomMusicControlFragment(private var position : Int,var listMusic: Array
 
     override fun onStop() {
         super.onStop()
-        Log.e(this.javaClass.simpleName,"stop fragment")
+        Log.e(this.javaClass.simpleName,"onStop")
         this.context?.unbindService(connection)
 //        Toast.makeText(this.context,"Stop",Toast.LENGTH_SHORT).show()
         mBound = false
@@ -96,6 +101,8 @@ class BottomMusicControlFragment(private var position : Int,var listMusic: Array
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.e(this.javaClass.simpleName,"onViewCreated")
+
         bottomTvName = view.findViewById(R.id.tvNameBottom)
         bottomTvArtist = view.findViewById(R.id.tvArtistBottom)
         bottomImgView = view.findViewById(R.id.bottomImgView)
@@ -118,14 +125,16 @@ class BottomMusicControlFragment(private var position : Int,var listMusic: Array
             bottomPlayBtn?.visibility = View.VISIBLE
             bottomPauseBtn?.visibility = View.INVISIBLE
 //            mediaPlayer.start()
-            mService.playMusic()
+            mService?.playMusic()
         }
 
         bottomPlayBtn?.setOnClickListener {
             bottomPlayBtn?.visibility = View.INVISIBLE
             bottomPauseBtn?.visibility = View.VISIBLE
 //            mediaPlayer.pause()
-            mService.pauseMusic()
+            mService?.pauseMusic()
+
+
         }
 
         /* button next/prev */
@@ -133,8 +142,10 @@ class BottomMusicControlFragment(private var position : Int,var listMusic: Array
             if(position<listMusic.size-1) {
                 position++
                 updateNewUI(position)
-                mService.stopMusic()
-                mService.startMusic(listMusic[position])
+                mService?.stopMusic()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    mService?.startMusic(listMusic[position])
+                }
             }
         }
 
@@ -142,11 +153,24 @@ class BottomMusicControlFragment(private var position : Int,var listMusic: Array
             if(position>0) {
                 position--
                 updateNewUI(position)
-                mService.stopMusic()
-                mService.startMusic(listMusic[position])
+                mService?.stopMusic()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    mService?.startMusic(listMusic[position])
+
+                }
             }
         }
+
+        mService?.liveDataIsPlaying.observe(this.viewLifecycleOwner, Observer<Boolean> {bottomPauseBtn?.isVisible = it})
+
     }
+
+//    private fun updatePlayUI(it: Boolean) {
+//            bottomPauseBtn?.isVisible = it
+//            bottomPlayBtn?.isVisible = !it
+//            Log.e("log",it.toString())
+//
+//    }
 
     fun updateNewUI(position:Int)
     {

@@ -1,5 +1,6 @@
 package com.example.listentomusic
 
+import android.app.Notification.VISIBILITY_PUBLIC
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -21,13 +22,17 @@ import android.widget.SeekBar
 import android.widget.TextView
 import androidx.annotation.ColorInt
 import androidx.annotation.RequiresApi
+import androidx.core.app.NotificationCompat.VISIBILITY_PUBLIC
 import androidx.core.net.toUri
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
+import androidx.media.app.NotificationCompat
 import com.bumptech.glide.Glide
 import com.example.listentomusic.model.Music
 import java.util.*
 import kotlin.collections.ArrayList
+//import android.support.v4.app.NotificationCompat
+//import android.support.v4.media.app.NotificationCompat as MediaNotificationCompat
 
 class PlayMusicActivity : AppCompatActivity() {
     private var backBtn: ImageButton? = null
@@ -122,7 +127,9 @@ class PlayMusicActivity : AppCompatActivity() {
                 position++
                 updateNewUI(position)
                 mService.stopMusic()
-                mService.startMusic(listMusic[position])
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    mService.startMusic(listMusic[position])
+                }
             }
         }
 
@@ -131,7 +138,9 @@ class PlayMusicActivity : AppCompatActivity() {
                 position--
                 updateNewUI(position)
                 mService.stopMusic()
-                mService.startMusic(listMusic[position])
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    mService.startMusic(listMusic[position])
+                }
             }
         }
 
@@ -189,28 +198,13 @@ class PlayMusicActivity : AppCompatActivity() {
         var duration = mService.getDuration()!!/1000
         var minute = duration!!/60
         var second = duration!! - minute*60
-        tvSeekBarEnd?.text = minute.toString()+":"+second.toString()
+        tvSeekBarEnd?.text = String.format("%02d",minute)+":"+String.format("%02d",second)
         updateSeekBar()
     }
 
     fun updateSeekBar()
     {
-        //        Thread(Runnable {
-//            this@PlayMusicActivity.runOnUiThread(Runnable {
-//                Log.e(this.javaClass.simpleName,"thread UI")
-//                seekBar?.progress = mService.getCurrenPosition()!!
-//            })
-//        }).start()
 
-//        Thread({
-//            object :Runnable{
-//                override fun run() {
-//                    Log.e(this.javaClass.simpleName,"Thread Update seekbar")
-//                    seekBar?.progress = mService.getCurrenPosition()!!
-//                    playingThreadHandler.postDelayed(this,1000)
-//                }
-//            }
-//        })
         timeMax = mService.getDuration()!!
         timer = Timer()
         var timerTask = object : TimerTask() {
@@ -285,5 +279,9 @@ class PlayMusicActivity : AppCompatActivity() {
                 .into(imgView!!)
         }
     }
+
+
+
+
 }
 

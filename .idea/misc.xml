@@ -3,6 +3,9 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/Dell/Desktop/ListenToMusic/app/src/main/res/drawable/disc.xml" value="0.2703125" />
+        <entry key="..\:/Users/Dell/Desktop/ListenToMusic/app/src/main/res/drawable/now_playing_background.xml" value="0.2703125" />
+        <entry key="..\:/Users/Dell/Desktop/ListenToMusic/app/src/main/res/drawable/play.xml" value="0.2703125" />
         <entry key="..\:/Users/Dell/Desktop/ListenToMusic/app/src/main/res/layout/activity_play_music.xml" value="0.176" />
       </map>
     </option>
